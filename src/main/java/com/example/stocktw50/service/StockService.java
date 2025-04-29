@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.List;
 
@@ -17,6 +18,12 @@ public class StockService {
 
     @Autowired
     private StockRepository stockRepository;
+
+    // 啟動時立即爬一次
+    @PostConstruct
+    public void init() {
+        updateTW50Stocks();
+    }
 
     // 每小時自動更新一次
     @Scheduled(cron = "0 0 * * * *")

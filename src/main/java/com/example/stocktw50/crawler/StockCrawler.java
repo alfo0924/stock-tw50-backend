@@ -4,7 +4,6 @@ import com.example.stocktw50.model.Stock;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -19,29 +18,42 @@ public class StockCrawler {
         List<Stock> result = new ArrayList<>();
         Document doc = Jsoup.connect(URL).get();
 
-        // 解析表格
-        Element table = doc.selectFirst("table#StockList");
-        if (table == null) return result;
+        // 1. 直接抓取 <pre> 區塊，這裡才是主要資料
+        Element pre = doc.selectFirst("pre");
+        if (pre == null) return result;
 
-        Elements rows = table.select("tr");
-        for (int i = 1; i < rows.size(); i++) { // skip header
-            Element row = rows.get(i);
-            Elements tds = row.select("td");
-            if (tds.size() < 6) continue;
+        String[] lines = pre.text().split("\\r?\\n");
+        for (String line : lines) {
+            line = line.trim();
+            // 2. 只處理開頭為數字的資料列
+            if (!line.matches("^\\d+\\s+.*")) continue;
 
-            int rank = Integer.parseInt(tds.get(0).text().trim());
-            String id = tds.get(1).text().trim();
-            String name = tds.get(2).text().trim();
-            String marketCap = tds.get(3).text().trim();
-            String changeStr = tds.get(5).text().replace(",", "").replace("%", "").trim();
-            double change = 0.0;
+            // 3. 切割欄位
+            String[] tokens = line.split("\\s+");
+            if (tokens.length < 15) continue; // 欄位數量不足則跳過
+
             try {
-                change = Double.parseDouble(changeStr);
-            } catch (Exception e) {
-                // ignore
-            }
+                int rank = Integer.parseInt(tokens[0]);
+                String idAndName = tokens[1];
+                String id = idAndName.replaceAll("[^0-9]", "");
+                String name = idAndName.replaceAll("[0-9]", "");
+                // 依照資料實際欄位調整
+                String industry = tokens[2];
+                double change = Double.parseDouble(tokens[tokens.length - 1]); // 最後一欄為漲跌
+                String price = tokens[tokens.length - 2]; // 倒數第二欄為收盤價
 
-            result.add(new Stock(rank, id, name, marketCap, change));
+                // 你可以根據需要擴充更多欄位
+                Stock stock = new Stock();
+                stock.setRank(rank);
+                stock.setId(id);
+                stock.setName(name);
+                stock.setMarketCap(price); // 假設 marketCap 欄位用收盤價暫代
+                stock.setChange(change);
+
+                result.add(stock);
+            } catch (Exception e) {
+                // 若有格式錯誤則略過該行
+            }
         }
         return result;
     }
