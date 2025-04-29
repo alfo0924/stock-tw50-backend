@@ -18,25 +18,20 @@ public class StockCrawler {
     public List<Stock> fetchTW50Stocks() {
         List<Stock> result = new ArrayList<>();
 
-        // 可選：指定 chromedriver 路徑
-        // System.setProperty("webdriver.chrome.driver", "C:/path/to/chromedriver.exe");
-
         ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless"); // 無頭模式
+        options.addArguments("--headless");
         options.addArguments("--disable-gpu");
         options.addArguments("--no-sandbox");
 
         WebDriver driver = new ChromeDriver(options);
         try {
             driver.get(URL);
-
-            // 等待表格出現（簡單 sleep，正式可用 WebDriverWait）
             Thread.sleep(3000);
 
             WebElement table = driver.findElement(By.id("StockList"));
             List<WebElement> rows = table.findElements(By.tagName("tr"));
 
-            for (int i = 1; i < rows.size(); i++) { // 跳過表頭
+            for (int i = 1; i < rows.size(); i++) {
                 List<WebElement> tds = rows.get(i).findElements(By.tagName("td"));
                 if (tds.size() < 6) continue;
 

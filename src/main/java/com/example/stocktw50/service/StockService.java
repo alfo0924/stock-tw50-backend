@@ -32,7 +32,7 @@ public class StockService {
             List<Stock> stocks = stockCrawler.fetchTW50Stocks();
             stockRepository.saveTW50Stocks(stocks);
             System.out.println("台灣50排行已更新，共 " + stocks.size() + " 檔");
-        } catch (IOException e) {
+        } catch (Exception e) {
             System.err.println("台灣50排行爬取失敗：" + e.getMessage());
         }
     }
